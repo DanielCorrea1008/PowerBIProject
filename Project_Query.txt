@@ -1,0 +1,14 @@
+let
+    Source = Table.NestedJoin(DimProduct, {"ProductSubcategoryKey"}, DimProductSubcategory, {"ProductSubcategoryKey"}, "DimProdSubcat", JoinKind.LeftOuter),
+    ExpandedDimProdSubcat = Table.ExpandTableColumn(Source, "DimProdSubcat", {"ProductSubcategoryKey", "EnglishProductSubcategoryName", "ProductCategoryKey"},
+                                     {"DimProdSubcat.ProductSubcategoryKey", "DimProdSubcat.EnglishProductSubcategoryName", "DimProdSubcat.ProductCategoryKey"}),
+  
+    joinProdCat = Table.NestedJoin(ExpandedDimProdSubcat, {"DimProdSubcat.ProductCategoryKey"}, DimProductCategory, {"ProductCategoryKey"}, "DimProCat", JoinKind.LeftOuter),
+    ExpandedDimProCat = Table.ExpandTableColumn(joinProdCat, "DimProCat", {"EnglishProductCategoryName"}, {"DimProCat.EnglishProductCategoryName"}),
+
+    SelectProudctColumns = Table.SelectColumns(ExpandedDimProCat,{"ProductKey", "EnglishProductName", "EnglishDescription", "Status", "DimProdSubcat.ProductSubcategoryKey", "DimProdSubcat.EnglishProductSubcategoryName", "DimProCat.EnglishProductCategoryName"}),
+    #"Renamed Columns" = Table.RenameColumns(SelectProudctColumns,{{"DimProCat.EnglishProductCategoryName", "Product Category Name"}, {"DimProdSubcat.ProductSubcategoryKey", "Product SubcategoryKey"}, {"DimProdSubcat.EnglishProductSubcategoryName", "Product Subcategory Name"}, {"EnglishDescription", "Description"}, {"EnglishProductName", "Product Name"}}),
+    #"Replaced Value" = Table.ReplaceValue(#"Renamed Columns",null,"Unknown",Replacer.ReplaceValue,{"Product Subcategory Name"}),
+    #"Replaced Value1" = Table.ReplaceValue(#"Replaced Value",null,"Unknown",Replacer.ReplaceValue,{"Product Category Name"})
+in
+    #"Replaced Value1"
